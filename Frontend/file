@@ -1,0 +1,134 @@
+{ "_id": {
+    "$oid": "6a0eab31dd159b435ce7e6b1"
+  },
+  
+  "matchScore": 85,
+  "technicalQuestions": [
+    {
+      "question": "Explain how middleware functions work in Express.js and provide an example of a common use case.",
+      "intention": "To assess understanding of Express.js architecture and common patterns for handling requests.",
+      "answer": "Middleware functions in Express.js are functions that have access to the request object (req), the response object (res), and the next middleware function in the application's request-response cycle. They can execute code, make changes to the request and response objects, end the request-response cycle, or call the next middleware. A common use case is authentication, where a middleware can check for a valid token in the request headers and grant or deny access to subsequent route handlers."
+    },
+    {
+      "question": "Describe a scenario where you would choose a NoSQL database like MongoDB over a SQL database like PostgreSQL, and what considerations would you make for schema design in MongoDB.",
+      "intention": "To assess understanding of database choices and NoSQL schema design principles.",
+      "answer": "I would choose MongoDB for applications requiring high scalability, flexible schema, and handling large volumes of unstructured or semi-structured data, such as real-time analytics dashboards, content management systems with evolving data models, or IoT applications where sensor data varies. For schema design in MongoDB, I'd prioritize data locality by embedding related data where frequent reads happen together, and use referencing for less frequently accessed or large, shared data. I'd also consider denormalization for read performance and design efficient indexing strategies for frequently queried fields."
+    },
+    {
+      "question": "What are the key principles of designing a RESTful API? How would you handle API versioning in a practical scenario?",
+      "intention": "To evaluate knowledge of REST architectural style best practices and practical implementation details.",
+      "answer": "The key principles of RESTful API design include client-server separation, statelessness (each request from client to server must contain all information needed to understand the request), cacheability (responses should be explicitly or implicitly defined as cacheable or non-cacheable), a uniform interface (resource-based addressing, use of standard HTTP methods like GET, POST, PUT, DELETE, and HATEOAS for discoverability), and a layered system. For API versioning, I would typically use URI versioning (e.g., /api/v1/resources) for its simplicity and clear visibility, or potentially header versioning (e.g., X-API-Version header) if multiple versions of the same resource are needed without changing the URI structure."
+    },
+    {
+      "question": "Explain the concept of JSON Web Tokens (JWT) and how they are typically used for authentication in a Node.js application.",
+      "intention": "To test understanding of a specific and widely used authentication mechanism.",
+      "answer": "JWTs are compact, URL-safe means of representing claims between two parties. They consist of three parts: a header (algorithm and token type), a payload (claims like user ID, roles, expiration), and a signature (used to verify the token's authenticity). In a Node.js application, after a user successfully logs in, the server generates a JWT, signs it with a secret key, and sends it back to the client. The client stores this token (e.g., in local storage) and includes it in the 'Authorization' header (as a Bearer token) of subsequent requests to protected routes. The server then uses the secret key to verify the token's signature and extracts the payload to authenticate the user for that request."
+    }
+  ],
+  "behavioralQuestions": [
+    {
+      "question": "Tell me about a time you encountered a significant backend issue or bug that was difficult to diagnose. What steps did you take to troubleshoot and resolve it?",
+      "intention": "To assess problem-solving skills, debugging approach, and resilience under pressure.",
+      "answer": "S: In a recent project, we encountered intermittent 500 errors on a critical API endpoint only during peak load, which was difficult to reproduce locally. T: My task was to identify the root cause of these errors quickly to prevent service disruption. A: I started by enhancing logging in the production environment to capture more detailed stack traces and request parameters for the failing endpoint. I then used a load testing tool to simulate peak traffic and consistently reproduce the error. By correlating the new logs with the load test, I pinpointed the issue to a specific, unoptimized database query that was timing out under high concurrent requests. R: I refactored the query to use appropriate indexes and implemented a basic caching layer for frequently accessed data, which resolved the 500 errors and significantly improved the endpoint's response time under heavy load."
+    },
+    {
+      "question": "Describe a situation where you had to collaborate closely with frontend developers or a product team. How did you ensure effective communication and successful integration of your backend work?",
+      "intention": "To evaluate teamwork, communication skills, and ability to work in cross-functional teams.",
+      "answer": "S: On a MERN stack project, I was responsible for building a set of new RESTful APIs, while a frontend developer was simultaneously building the user interface that would consume these APIs. T: The challenge was to ensure seamless integration and avoid misunderstandings regarding API contracts and data structures. A: We established daily sync-up meetings to discuss progress, potential roadblocks, and API changes. I provided detailed API documentation using Postman collections, including example requests and responses for each endpoint. We also agreed on clear versioning for the API and used Git for collaborative development. When the frontend team requested modifications to a response structure, we discussed the implications on the backend and found a solution that met both our needs. R: This proactive communication and documentation ensured that the frontend team had stable and predictable APIs to work with, leading to a smooth integration process and timely feature delivery."
+    },
+    {
+      "question": "The job description mentions working in a fast-paced environment and continuous learning. Can you share an example of a new technology or complex concept you had to learn quickly for a project, and how you approached it?",
+      "intention": "To gauge initiative, learning capability, and adaptability to new tools/technologies in a dynamic setting.",
+      "answer": "S: During my Full Stack Intern experience, a new project required integrating a third-party payment gateway API that none of our team members had used before. T: I was tasked with understanding and implementing this API securely and efficiently within a two-week sprint. A: My approach involved first thoroughly reading the official documentation, focusing on key concepts like authentication, transaction flows, and error handling. I then created small, isolated proof-of-concept scripts in Node.js to test individual API endpoints and understand their request/response patterns. I leveraged online forums and community resources for common pitfalls and best practices. Finally, I incrementally integrated the API into our application, testing each step rigorously. R: I successfully integrated the payment gateway ahead of schedule, demonstrating my ability to quickly acquire new technical skills and apply them effectively to project requirements in a rapid development cycle."
+    }
+  ],
+  "skillGaps": [
+    {
+      "skill": "SQL Databases (MySQL/PostgreSQL)",
+      "severity": "medium"
+    },
+    {
+      "skill": "Advanced Authentication Mechanisms (OAuth)",
+      "severity": "medium"
+    },
+    {
+      "skill": "TypeScript",
+      "severity": "medium"
+    },
+    {
+      "skill": "Microservices Architecture",
+      "severity": "medium"
+    },
+    {
+      "skill": "Caching (e.g., Redis)",
+      "severity": "medium"
+    },
+    {
+      "skill": "CI/CD Pipeline Knowledge",
+      "severity": "medium"
+    }
+  ],
+  "preparationPlan": [
+    {
+      "day": 1,
+      "focus": "SQL Databases & Advanced Authentication",
+      "tasks": [
+        "Complete an online tutorial on SQL basics (CRUD operations, joins) with MySQL or PostgreSQL.",
+        "Set up a local MySQL/PostgreSQL database and create a simple schema for a practice project.",
+        "Implement a basic Node.js backend using a SQL ORM (e.g., Sequelize) to perform CRUD operations.",
+        "Research and understand OAuth 2.0 flows and common implementations for authentication."
+      ],
+      "_id": {
+        "$oid": "6a0eab31dd159b435ce7e6b2"
+      }
+    },
+    {
+      "day": 2,
+      "focus": "TypeScript & Microservices Principles",
+      "tasks": [
+        "Learn TypeScript fundamentals: types, interfaces, classes, and compiling to JavaScript.",
+        "Convert a small existing Node.js/Express.js project to TypeScript.",
+        "Study core concepts of microservices architecture: service discovery, API gateways, inter-service communication.",
+        "Understand the trade-offs between monolithic and microservices architectures."
+      ],
+      "_id": {
+        "$oid": "6a0eab31dd159b435ce7e6b3"
+      }
+    },
+    {
+      "day": 3,
+      "focus": "Caching & CI/CD Fundamentals",
+      "tasks": [
+        "Explore caching strategies in web applications and learn about Redis.",
+        "Set up a local Redis instance and implement a simple caching mechanism in a Node.js application.",
+        "Understand the basic steps of a CI/CD pipeline (build, test, deploy).",
+        "Research popular CI/CD tools (e.g., GitHub Actions, Jenkins) and their role in deployment."
+      ],
+      "_id": {
+        "$oid": "6a0eab31dd159b435ce7e6b4"
+      }
+    },
+    {
+      "day": 4,
+      "focus": "Cloud Platforms & System Design",
+      "tasks": [
+        "Deepen understanding of AWS services relevant to backend (e.g., EC2, Lambda, SQS, SNS, RDS).",
+        "Practice designing a scalable backend system diagram incorporating learned concepts (databases, caching, microservices, cloud services).",
+        "Review common backend system design patterns and interview questions."
+      ],
+      "_id": {
+        "$oid": "6a0eab31dd159b435ce7e6b5"
+      }
+    }
+  ],
+  "user": {
+    "$oid": "6a09a14d4ca305a8fda0036d"
+  },
+  "createdAt": {
+    "$date": "2026-05-21T06:50:25.811Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-21T06:50:25.811Z"
+  },
+  "__v": 0
+}

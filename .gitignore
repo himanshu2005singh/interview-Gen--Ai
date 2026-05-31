@@ -1,0 +1,6 @@
+# Backend ke liye (Capital B)
+Backend/node_modules/
+Backend/.env
+
+# Frontend ke liye (Capital F)
+Frontend/node_modules/
