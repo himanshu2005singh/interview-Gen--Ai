@@ -5,10 +5,11 @@ import { useParams } from 'react-router'
 
 const Interview = () => {
   const { interviewId } = useParams()
-  const { report, getReportById, loading } = useInterview()
+  const { report, getReportById, generateResumePdf, loading } = useInterview()
 
   const [activeCategory, setActiveCategory] = useState('technical')
   const [roadmapPlan, setRoadmapPlan] = useState([])
+  const [downloadingPdf, setDownloadingPdf] = useState(false)
 
   // 1. Reload & Fetch Sync Effect
   useEffect(() => {
@@ -17,13 +18,13 @@ const Interview = () => {
     }
   }, [interviewId, report])
 
-  // 2. Roadmap Mapping Effect (Isme report ko strong dependency banaya hai)
+  // 2. Roadmap Mapping Effect
   useEffect(() => {
     if (report && report.preparationPlan) {
       setRoadmapPlan(
         report.preparationPlan.map((day) => ({
           ...day,
-          tasks: Array.isArray(day.tasks) 
+          tasks: Array.isArray(day.tasks)
             ? day.tasks.map((task) => typeof task === 'string' ? { text: task, completed: false } : task)
             : []
         }))
@@ -48,7 +49,19 @@ const Interview = () => {
     )
   }
 
-  // 3. Conditional Renderings (Loading States)
+  // PDF Generation Handler
+  const handleDownloadPdf = async () => {
+    if (!interviewId && !report?._id) return
+    setDownloadingPdf(true)
+    try {
+      await generateResumePdf({ interviewReportId: interviewId || report._id })
+    } catch (err) {
+      console.error("PDF Download failed:", err)
+    } finally {
+      setDownloadingPdf(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="interview-loading" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', fontSize: '1.2rem', fontWeight: 'bold' }}>
@@ -172,7 +185,6 @@ const Interview = () => {
       {/* MAIN CONTENT */}
       <section className="main-content">
         <div className="content-wrapper">
-          {/* Match Score */}
           <div className="match-score-container">
             <div className="match-score">
               <span className="score-label">Match Score</span>
@@ -180,7 +192,6 @@ const Interview = () => {
             </div>
           </div>
 
-          {/* Content area */}
           {activeCategory === 'roadmap' ? renderRoadmap() : renderQuestions()}
         </div>
       </section>
@@ -203,6 +214,26 @@ const Interview = () => {
             <p className="summary-text">
               Focus on improving skill gaps over 4 days with structured learning tasks and practical exercises.
             </p>
+          </div>
+
+          {/* DOWNLOAD RESUME ACTION */}
+          <div className="download-action" style={{ marginTop: '20px' }}>
+            <button
+              onClick={handleDownloadPdf}
+              disabled={downloadingPdf}
+              style={{
+                width: '100%',
+                padding: '12px',
+                backgroundColor: '#2563eb',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: downloadingPdf ? 'not-allowed' : 'pointer',
+                fontWeight: 'bold'
+              }}
+            >
+              {downloadingPdf ? '📄 Generating PDF...' : '📥 Download Tailored Resume PDF'}
+            </button>
           </div>
         </div>
       </aside>
