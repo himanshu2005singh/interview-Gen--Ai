@@ -14,35 +14,37 @@ export const generateInterviewReport = async ({
     formData.append("selfDescription", selfDescription);
     formData.append("resume", resumeFile);
 
-    const response = await api.post(
-      "/interview/",
-      formData,
-      {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      }
-    );
+    const response = await api.post("/interview/", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
 
-    console.log('API Response:', response.data);
-    console.log('InterviewReport:', response.data.interviewReport);
+    console.log("API Response:", response.data);
 
-    return response.data.interviewReport;
-
+    // Dynamic response handling
+    const reportData = response.data?.interviewReport || response.data;
+    return reportData;
   } catch (error) {
-    console.error('Interview API Error:', {
+    console.error("Interview API Error:", {
       message: error.message,
       status: error.response?.status,
       data: error.response?.data,
-      code: error.code
+      code: error.code,
     });
-    
-    if (error.message === 'Network Error' || error.code === 'ERR_NETWORK' || error.message.includes('ERR_CONNECTION')) {
-      const networkError = new Error('Unable to connect to backend server. Please check your network or server status.');
+
+    if (
+      error.message === "Network Error" ||
+      error.code === "ERR_NETWORK" ||
+      error.message?.includes("ERR_CONNECTION")
+    ) {
+      const networkError = new Error(
+        "Unable to connect to backend server. Please check your network or server status."
+      );
       networkError.isNetworkError = true;
       throw networkError;
     }
-    
+
     throw error;
   }
 };
@@ -51,20 +53,26 @@ export const generateInterviewReport = async ({
  * Get Interview By Id
  */
 export const getInterviewReportById = async (interviewId) => {
-  const response = await api.get(
-    `/interview/report/${interviewId}`
-  );
-
-  return response.data;
+  try {
+    const response = await api.get(`/interview/report/${interviewId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Get Report By ID Error:", error.response?.data || error.message);
+    throw error;
+  }
 };
 
 /**
  * Get All Interview Reports
  */
 export const getAllInterviewReports = async () => {
-  const response = await api.get("/interview");
-
-  return response.data;
+  try {
+    const response = await api.get("/interview");
+    return response.data;
+  } catch (error) {
+    console.error("Get All Reports Error:", error.response?.data || error.message);
+    throw error;
+  }
 };
 
 /**
@@ -82,7 +90,7 @@ export const generateResumePdf = async ({ interviewReportId }) => {
 
     const blob = new Blob([response.data], { type: "application/pdf" });
     const downloadUrl = window.URL.createObjectURL(blob);
-    
+
     const link = document.createElement("a");
     link.href = downloadUrl;
     link.setAttribute("download", `Tailored_Resume_${interviewReportId}.pdf`);
@@ -94,7 +102,10 @@ export const generateResumePdf = async ({ interviewReportId }) => {
 
     return true;
   } catch (error) {
-    console.error("Generate PDF API Error:", error.response?.data || error.message);
+    console.error(
+      "Generate PDF API Error:",
+      error.response?.data || error.message
+    );
     throw error;
   }
 };

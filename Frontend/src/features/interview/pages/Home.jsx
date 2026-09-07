@@ -24,30 +24,36 @@ const Home = () => {
   }, []);
 
   const handleResumeUpload = (e) => {
-    const file = e.target.files[0];
+    const file = e.target.files && e.target.files[0];
     if (file) {
+      if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
+        alert("Please upload a valid PDF file.");
+        return;
+      }
       setResume(file);
     }
   };
 
   const handleSubmit = async () => {
     try {
-      const resumeFile = resumeInputRef.current.files[0];
+      // Always use state variable first, fallback to ref if available
+      const resumeFile = resume || (resumeInputRef.current && resumeInputRef.current.files[0]);
 
       if (!resumeFile) {
-        alert("Please upload a resume");
+        alert("Please upload a valid PDF resume.");
         return;
       }
 
       if (!jobDescription.trim() || !selfDescription.trim()) {
-        alert("Please fill in job description and self description");
+        alert("Please fill in job description and self description.");
         return;
       }
 
+      // Explicit payload structure for hook/axios wrapper
       const data = await generateReport({
-        jobDescription,
-        selfDescription,
-        resumeFile
+        jobDescription: jobDescription.trim(),
+        selfDescription: selfDescription.trim(),
+        resumeFile: resumeFile, // Actual File object
       });
 
       if (!data || !data._id) {
@@ -61,9 +67,14 @@ const Home = () => {
         jobDescription: jobDescription,
         selfDescription: selfDescription,
         resumeName: resumeFile.name,
-        timestamp: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit' })
+        timestamp: new Date().toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
       };
-      
+
       const updatedHistory = [newHistoryItem, ...history];
       setHistory(updatedHistory);
       localStorage.setItem("interview_history", JSON.stringify(updatedHistory));
@@ -74,15 +85,22 @@ const Home = () => {
       let errorMsg = "Failed to generate report. Please try again.";
 
       if (error.isNetworkError) {
-        errorMsg = "⚠️ Cannot connect to backend server!\n\nPlease start the backend:\n1. Open a new terminal\n2. cd Backend\n3. npm start\n\nThen try again.";
+        errorMsg =
+          "⚠️ Cannot connect to backend server!\n\nPlease start the backend:\n1. Open a new terminal\n2. cd Backend\n3. npm start\n\nThen try again.";
       } else if (error.response?.status === 503) {
         errorMsg = "⚠️ Backend server is not responding. Please ensure it's running.";
       } else if (error.response?.status === 429) {
         errorMsg = "⏱️ Rate limit reached. Please wait ~1 minute and try again.";
       } else if (error.response?.status === 400) {
-        errorMsg = error.response?.data?.message || "Invalid input. Please check your inputs.";
-      } else if (error.message?.includes("Network") || error.message?.includes("ERR_CONNECTION")) {
-        errorMsg = "⚠️ Cannot connect to backend server!\n\nPlease start the backend:\n1. Open a new terminal\n2. cd Backend\n3. npm start";
+        errorMsg =
+          error.response?.data?.message ||
+          "Invalid PDF or input parameters. Make sure the file is a readable PDF.";
+      } else if (
+        error.message?.includes("Network") ||
+        error.message?.includes("ERR_CONNECTION")
+      ) {
+        errorMsg =
+          "⚠️ Cannot connect to backend server!\n\nPlease start the backend:\n1. Open a new terminal\n2. cd Backend\n3. npm start";
       } else {
         errorMsg = error.response?.data?.message || errorMsg;
       }
@@ -135,9 +153,7 @@ const Home = () => {
               <textarea
                 onChange={(e) => setJobDescription(e.target.value)}
                 id="jobDescription"
-                placeholder={`Paste the full job description here...
-
-e.g. Senior Frontend Engineer at Google requires proficiency in React, TypeScript, and large-scale system design...`}
+                placeholder={`Paste the full job description here...\n\ne.g. Senior Frontend Engineer at Google requires proficiency in React, TypeScript, and large-scale system design...`}
                 value={jobDescription}
                 disabled={loading}
               ></textarea>
@@ -160,33 +176,34 @@ e.g. Senior Frontend Engineer at Google requires proficiency in React, TypeScrip
                   <small className="highlight">BEST RESULTS</small>
                 </p>
 
-                <label htmlFor="resume" className={`file-label ${loading ? "disabled" : ""}`}>
+                <label
+                  htmlFor="resume"
+                  className={`file-label ${loading ? "disabled" : ""}`}
+                >
                   <div className="upload-icon">⬆</div>
                   <h4>
                     {resume ? resume.name : "Click to upload or drag & drop"}
                   </h4>
-                  <span>PDF or DOCX (Max 5MB)</span>
+                  <span>PDF format only (Max 5MB)</span>
                 </label>
 
                 <input
                   ref={resumeInputRef}
                   type="file"
                   id="resume"
-                  accept=".pdf,.doc,.docx"
+                  accept="application/pdf,.pdf"
                   onChange={handleResumeUpload}
                   style={{ display: "none" }}
                   disabled={loading}
                 />
               </div>
 
-              {/* SELF DESCRIPTION (SUMMARY) */}
+              {/* SELF DESCRIPTION */}
               <div className="input-group summary-group">
                 <p>Your Profile Summary</p>
                 <textarea
                   id="selfDescription"
-                  placeholder={`Brief description about yourself...
-
-e.g. 2 years of React experience, comfortable with Node.js backend, working on performance optimization...`}
+                  placeholder={`Brief description about yourself...\n\ne.g. 2 years of React experience, comfortable with Node.js backend, working on performance optimization...`}
                   value={selfDescription}
                   onChange={(e) => setSelfDescription(e.target.value)}
                   disabled={loading}
@@ -210,10 +227,12 @@ e.g. 2 years of React experience, comfortable with Node.js backend, working on p
           <div className="history-header">
             <h3>🕒 Past Strategies</h3>
             {history.length > 0 && (
-              <button className="clear-btn" onClick={clearHistory}>Clear All</button>
+              <button className="clear-btn" onClick={clearHistory}>
+                Clear All
+              </button>
             )}
           </div>
-          
+
           <div className="history-list">
             {history.length === 0 ? (
               <div className="empty-history">
@@ -222,8 +241,8 @@ e.g. 2 years of React experience, comfortable with Node.js backend, working on p
               </div>
             ) : (
               history.map((item, index) => (
-                <div 
-                  key={index} 
+                <div
+                  key={index}
                   className="history-item"
                   onClick={() => navigate(`/interview/${item.id}`)}
                   title="Click to view this report"
