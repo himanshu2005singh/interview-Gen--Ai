@@ -1,12 +1,4 @@
-import axios from "axios";
-
-// Dynamic base URL configuration with fallback to production backend
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL 
-    ? `${import.meta.env.VITE_API_BASE_URL.replace(/\/$/, '')}/api` 
-    : "https://interview-gen-ai-ws7i.onrender.com/api",
-  withCredentials: true,
-});
+import api from "./auth.api";
 
 /**
  * Generate Interview Report
@@ -106,5 +98,3 @@ export const generateResumePdf = async ({ interviewReportId }) => {
     throw error;
   }
 };
-
-export default api;
