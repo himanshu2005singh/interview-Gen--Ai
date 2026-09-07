@@ -1,39 +1,27 @@
-
-
 import axios from "axios";
 
-// ✅ Hardcoded localhost ko badal kar environment variable aur production fallback set kar diya:
+// Dynamic base URL configuration with fallback to production backend
 const api = axios.create({
-  baseURL: (import.meta.env.VITE_API_BASE_URL 
+  baseURL: import.meta.env.VITE_API_BASE_URL 
     ? `${import.meta.env.VITE_API_BASE_URL.replace(/\/$/, '')}/api` 
-    : "https://interview-gen-ai-ws7i.onrender.com/api"),
+    : "https://interview-gen-ai-ws7i.onrender.com/api",
   withCredentials: true,
 });
 
 /**
  * Generate Interview Report
  */
-
 export const generateInterviewReport = async ({
   jobDescription,
   selfDescription,
   resumeFile,
 }) => {
-
   try {
-
     const formData = new FormData();
-
     formData.append("jobDescription", jobDescription);
-
     formData.append("selfDescription", selfDescription);
-
-    // CHANGED:
-    // backend expects upload.single("resume")
     formData.append("resume", resumeFile);
 
-    // CHANGED:
-    // route fixed - baseURL already has /api, so just use /interview/
     const response = await api.post(
       "/interview/",
       formData,
@@ -44,7 +32,6 @@ export const generateInterviewReport = async ({
       }
     );
 
-    // DEBUG: Log the full response to see structure
     console.log('API Response:', response.data);
     console.log('InterviewReport:', response.data.interviewReport);
 
@@ -58,9 +45,8 @@ export const generateInterviewReport = async ({
       code: error.code
     });
     
-    // Better error messages for different scenarios
     if (error.message === 'Network Error' || error.code === 'ERR_NETWORK' || error.message.includes('ERR_CONNECTION')) {
-      const networkError = new Error('Backend server is not running on port 3000. Please start it with: cd Backend && npm start');
+      const networkError = new Error('Unable to connect to backend server. Please check your network or server status.');
       networkError.isNetworkError = true;
       throw networkError;
     }
@@ -72,9 +58,7 @@ export const generateInterviewReport = async ({
 /**
  * Get Interview By Id
  */
-
 export const getInterviewReportById = async (interviewId) => {
-
   const response = await api.get(
     `/interview/report/${interviewId}`
   );
@@ -85,23 +69,14 @@ export const getInterviewReportById = async (interviewId) => {
 /**
  * Get All Interview Reports
  */
-
 export const getAllInterviewReports = async () => {
-
   const response = await api.get("/interview");
 
   return response.data;
 };
 
-
-/**
- * @description Service to generate resume pdf based on use self description, resume content and job description
- */
 /**
  * Generate Resume PDF
- * @description Triggers PDF generation for a given interview report ID and automatically starts browser download.
- * @param {Object} params
- * @param {string} params.interviewReportId
  */
 export const generateResumePdf = async ({ interviewReportId }) => {
   try {
@@ -109,11 +84,10 @@ export const generateResumePdf = async ({ interviewReportId }) => {
       `/interview/resume/pdf/${interviewReportId}`,
       {},
       {
-        responseType: "blob", // Standard for receiving PDF binary files
+        responseType: "blob",
       }
     );
 
-    // Dynamic Blob Object Creation & Browser Download Trigger
     const blob = new Blob([response.data], { type: "application/pdf" });
     const downloadUrl = window.URL.createObjectURL(blob);
     
@@ -123,7 +97,6 @@ export const generateResumePdf = async ({ interviewReportId }) => {
     document.body.appendChild(link);
     link.click();
 
-    // Memory Cleanup
     link.remove();
     window.URL.revokeObjectURL(downloadUrl);
 
@@ -133,3 +106,5 @@ export const generateResumePdf = async ({ interviewReportId }) => {
     throw error;
   }
 };
+
+export default api;
