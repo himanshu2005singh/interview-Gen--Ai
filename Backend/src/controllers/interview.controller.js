@@ -1,6 +1,17 @@
-const pdfParse = require("pdf-parse");
+const pdfParseModule = require("pdf-parse");
 const { generateInterviewReport, generateResumePdf } = require("../services/ai.service");
 const interviewReportModel = require("../models/interviewReport.model");
+
+// Safe pdf-parse caller (handles both CJS default export and standard exports)
+const safePdfParse = async (buffer) => {
+  if (typeof pdfParseModule === "function") {
+    return await pdfParseModule(buffer);
+  } else if (pdfParseModule && typeof pdfParseModule.default === "function") {
+    return await pdfParseModule.default(buffer);
+  } else {
+    throw new Error("pdf-parse library initialization failed");
+  }
+};
 
 async function generateInterviewReportController(req, res) {
   try {
@@ -11,30 +22,46 @@ async function generateInterviewReportController(req, res) {
       });
     }
 
-    // 2. Safe PDF Parsing (Fixed pdf-parse call & buffer handling)
+    // 2. Magic Bytes Validation (%PDF Check)
+    const pdfHeader = req.file.buffer.toString("utf8", 0, 4);
+    if (pdfHeader !== "%PDF") {
+      return res.status(400).json({
+        message: "Uploaded file is not a valid PDF document. Please upload a real PDF file."
+      });
+    }
+
+    // 3. Safe PDF Parsing
     let resumeContent;
     try {
-      resumeContent = await pdfParse(req.file.buffer);
+      resumeContent = await safePdfParse(req.file.buffer);
     } catch (pdfError) {
-      console.error("❌ PDF Parsing Error:", pdfError.message);
+      console.error("❌ PDF Parsing Error Details:", pdfError);
       return res.status(400).json({
-        message: "Uploaded file is corrupted or not a valid PDF."
+        message: "Uploaded file is corrupted or could not be parsed as PDF."
+      });
+    }
+
+    const extractedText = resumeContent?.text ? resumeContent.text.trim() : "";
+
+    if (!extractedText) {
+      return res.status(400).json({
+        message: "PDF contains no readable text. Scanned PDFs/Images are not supported."
       });
     }
 
     const { selfDescription, jobDescription } = req.body;
 
-    // 3. AI Service Call
+    // 4. AI Service Call
     const interviewReportByAi = await generateInterviewReport({
-      resume: resumeContent.text,
+      resume: extractedText,
       selfDescription,
       jobDescription
     });
 
-    // 4. Save to DB
+    // 5. Save to DB
     const interviewReport = await interviewReportModel.create({
       user: req.user.id,
-      resume: resumeContent.text,
+      resume: extractedText,
       selfDescription,
       jobDescription,
       ...interviewReportByAi
