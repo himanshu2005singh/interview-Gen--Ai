@@ -1,5 +1,6 @@
 const { GoogleGenAI, Type } = require("@google/genai");
-const puppeteer = require("puppeteer");
+const puppeteer = require("puppeteer-core");
+const chromium = require("@sparticuz/chromium");
 
 const ai = new GoogleGenAI({
   apiKey: process.env.GOOGLE_GENAI_API_KEY,
@@ -114,7 +115,7 @@ async function generateInterviewReport({ resume, selfDescription, jobDescription
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       const response = await ai.models.generateContent({
-        model: "gemini-1.5-flash", // Correct model parameter
+        model: "gemini-1.5-flash",
         contents: prompt,
         config: {
           systemInstruction:
@@ -142,19 +143,33 @@ async function generateInterviewReport({ resume, selfDescription, jobDescription
 }
 
 async function generatePdfFromHtml(htmlContent) {
-  const browser = await puppeteer.launch({
-    headless: "new",
-    args: ["--no-sandbox", "--disable-setuid-sandbox"], // Render / Cloud execution safe args
-  });
-  const page = await browser.newPage();
-  await page.setContent(htmlContent, { waitUntil: "networkidle0" });
+  let browser = null;
+  try {
+    // Chromium setup specifically configured for serverless/cloud platforms
+    browser = await puppeteer.launch({
+      args: chromium.args,
+      defaultViewport: chromium.defaultViewport,
+      executablePath: await chromium.executablePath(),
+      headless: chromium.headless,
+    });
 
-  const pdfBuffer = await page.pdf({
-    format: "A4",
-    printBackground: true,
-  });
-  await browser.close();
-  return pdfBuffer;
+    const page = await browser.newPage();
+    await page.setContent(htmlContent, { waitUntil: "networkidle0" });
+
+    const pdfBuffer = await page.pdf({
+      format: "A4",
+      printBackground: true,
+    });
+
+    return pdfBuffer;
+  } catch (err) {
+    console.error("❌ Puppeteer Error:", err);
+    throw err;
+  } finally {
+    if (browser !== null) {
+      await browser.close();
+    }
+  }
 }
 
 async function generateResumePdf({ resume, selfDescription, jobDescription }) {
@@ -167,7 +182,7 @@ async function generateResumePdf({ resume, selfDescription, jobDescription }) {
     `;
 
     const response = await ai.models.generateContent({
-      model: "gemini-1.5-flash", // Correct model parameter
+      model: "gemini-1.5-flash",
       contents: prompt,
       config: {
         systemInstruction:
