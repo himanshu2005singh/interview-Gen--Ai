@@ -1,6 +1,5 @@
 const { GoogleGenAI, Type } = require("@google/genai");
-const puppeteer = require("puppeteer-core");
-const chromium = require("@sparticuz/chromium");
+const htmlPdf = require("html-pdf-node");
 
 const ai = new GoogleGenAI({
   apiKey: process.env.GOOGLE_GENAI_API_KEY,
@@ -142,33 +141,17 @@ async function generateInterviewReport({ resume, selfDescription, jobDescription
   }
 }
 
+// Lightweight HTML to PDF generator (No Chromium / Puppeteer dependencies)
 async function generatePdfFromHtml(htmlContent) {
-  let browser = null;
   try {
-    // Chromium setup specifically configured for serverless/cloud platforms
-    browser = await puppeteer.launch({
-      args: chromium.args,
-      defaultViewport: chromium.defaultViewport,
-      executablePath: await chromium.executablePath(),
-      headless: chromium.headless,
-    });
+    const file = { content: htmlContent };
+    const options = { format: "A4", printBackground: true };
 
-    const page = await browser.newPage();
-    await page.setContent(htmlContent, { waitUntil: "networkidle0" });
-
-    const pdfBuffer = await page.pdf({
-      format: "A4",
-      printBackground: true,
-    });
-
+    const pdfBuffer = await htmlPdf.generatePdf(file, options);
     return pdfBuffer;
   } catch (err) {
-    console.error("❌ Puppeteer Error:", err);
+    console.error("❌ HTML to PDF conversion error:", err);
     throw err;
-  } finally {
-    if (browser !== null) {
-      await browser.close();
-    }
   }
 }
 
