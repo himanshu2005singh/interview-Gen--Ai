@@ -1,5 +1,6 @@
 const { GoogleGenAI, Type } = require("@google/genai");
-const htmlPdf = require("html-pdf-node");
+const PDFDocument = require("pdfkit");
+const { convert } = require("html-to-text");
 
 const ai = new GoogleGenAI({
   apiKey: process.env.GOOGLE_GENAI_API_KEY,
@@ -103,9 +104,9 @@ async function generateInterviewReport({ resume, selfDescription, jobDescription
   3. Extract all required properties according to the exact schema properties.
 
   INPUT CONTEXT:
-  - Resume: ${resume}
-  - Self Description: ${selfDescription}
-  - Job Description: ${jobDescription}
+  - Resume: ${resume || "N/A"}
+  - Self Description: ${selfDescription || "N/A"}
+  - Job Description: ${jobDescription || "N/A"}
   `;
 
   const maxRetries = 4;
@@ -141,18 +142,24 @@ async function generateInterviewReport({ resume, selfDescription, jobDescription
   }
 }
 
-// Lightweight HTML to PDF generator (No Chromium / Puppeteer dependencies)
-async function generatePdfFromHtml(htmlContent) {
-  try {
-    const file = { content: htmlContent };
-    const options = { format: "A4", printBackground: true };
+// Pure Node.js Native PDF Generator (Render RAM crash proof)
+function generatePdfFromHtml(htmlContent) {
+  return new Promise((resolve, reject) => {
+    try {
+      const textContent = convert(htmlContent, { wordwrap: 130 });
+      const doc = new PDFDocument({ margin: 40 });
+      const buffers = [];
 
-    const pdfBuffer = await htmlPdf.generatePdf(file, options);
-    return pdfBuffer;
-  } catch (err) {
-    console.error("❌ HTML to PDF conversion error:", err);
-    throw err;
-  }
+      doc.on("data", buffers.push.bind(buffers));
+      doc.on("end", () => resolve(Buffer.concat(buffers)));
+
+      doc.fontSize(11).text(textContent, { align: "left" });
+      doc.end();
+    } catch (err) {
+      console.error("❌ PDF Generation error:", err);
+      reject(err);
+    }
+  });
 }
 
 async function generateResumePdf({ resume, selfDescription, jobDescription }) {
