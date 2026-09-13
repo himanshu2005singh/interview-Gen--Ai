@@ -6,7 +6,8 @@ const CLEAN_BASE_URL = RAW_URL.replace(/\/$/, '').replace(/\/api$/, '');
 
 const api = axios.create({
   baseURL: `${CLEAN_BASE_URL}/api`,
-  withCredentials: true
+  // credentials cookies avoid karne aur header auth enable karne ke liye ise false rakhein
+  withCredentials: false 
 });
 
 // Interceptor to attach Authorization Bearer token to all outgoing requests
@@ -28,12 +29,15 @@ export async function register({ username, email, password }) {
     const response = await api.post('/auth/register', {
       username, email, password
     });
-    if (response.data.token) {
-      localStorage.setItem("token", response.data.token);
+    
+    // Check both potential response structures for token
+    const token = response.data?.token || response.data?.data?.token;
+    if (token) {
+      localStorage.setItem("token", token);
     }
     return response.data;
   } catch (err) {
-    console.log(err);
+    console.error("Register Error:", err);
     throw err;
   }
 }
@@ -43,12 +47,15 @@ export async function login({ email, password }) {
     const response = await api.post("/auth/login", {
       email, password
     });
-    if (response.data.token) {
-      localStorage.setItem("token", response.data.token);
+    
+    // Check both potential response structures for token
+    const token = response.data?.token || response.data?.data?.token;
+    if (token) {
+      localStorage.setItem("token", token);
     }
     return response.data;
   } catch (err) {
-    console.log(err);
+    console.error("Login Error:", err);
     throw err;
   }
 }
@@ -59,7 +66,7 @@ export async function logout() {
     localStorage.removeItem("token");
     return response.data;
   } catch (err) {
-    console.log(err);
+    console.error("Logout Error:", err);
     localStorage.removeItem("token");
     throw err;
   }
@@ -70,7 +77,7 @@ export async function getMe() {
     const response = await api.get("/auth/get-me");
     return response.data;
   } catch (err) {
-    console.log(err);
+    console.error("GetMe Error:", err);
     throw err;
   }
 }

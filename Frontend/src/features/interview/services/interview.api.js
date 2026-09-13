@@ -10,9 +10,13 @@ export const generateInterviewReport = async ({
 }) => {
   try {
     const formData = new FormData();
-    formData.append("jobDescription", jobDescription);
-    formData.append("selfDescription", selfDescription);
-    formData.append("resume", resumeFile);
+    formData.append("jobDescription", jobDescription || "");
+    formData.append("selfDescription", selfDescription || "");
+    
+    // Ensure actual File object is passed
+    if (resumeFile) {
+      formData.append("resume", resumeFile);
+    }
 
     const response = await api.post("/interview/", formData, {
       headers: {
@@ -88,6 +92,13 @@ export const generateResumePdf = async ({ interviewReportId }) => {
       }
     );
 
+    // Validate if received data is actually a PDF and not a JSON Error blob
+    if (response.data.type && response.data.type.includes("application/json")) {
+      const textData = await response.data.text();
+      const jsonError = JSON.parse(textData);
+      throw new Error(jsonError.message || "Failed to generate PDF");
+    }
+
     const blob = new Blob([response.data], { type: "application/pdf" });
     const downloadUrl = window.URL.createObjectURL(blob);
 
@@ -102,10 +113,19 @@ export const generateResumePdf = async ({ interviewReportId }) => {
 
     return true;
   } catch (error) {
-    console.error(
-      "Generate PDF API Error:",
-      error.response?.data || error.message
-    );
+    // If Blob error occurred, parse it back to text/json for correct logging
+    if (error.response && error.response.data instanceof Blob) {
+      const errorText = await error.response.data.text();
+      try {
+        const parsedError = JSON.parse(errorText);
+        console.error("Generate PDF Error:", parsedError);
+        throw new Error(parsedError.message || "Server error while generating PDF");
+      } catch (e) {
+        console.error("Generate PDF API Error:", errorText);
+      }
+    } else {
+      console.error("Generate PDF API Error:", error.response?.data || error.message);
+    }
     throw error;
   }
 };

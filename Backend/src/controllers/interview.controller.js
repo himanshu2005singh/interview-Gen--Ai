@@ -2,14 +2,18 @@ const pdfParseModule = require("pdf-parse");
 const { generateInterviewReport, generateResumePdf } = require("../services/ai.service");
 const interviewReportModel = require("../models/interviewReport.model");
 
-// Safe pdf-parse caller (handles both CJS default export and standard exports)
+// Safe pdf-parse caller (handles CJS default export & bundlers)
 const safePdfParse = async (buffer) => {
-  if (typeof pdfParseModule === "function") {
-    return await pdfParseModule(buffer);
-  } else if (pdfParseModule && typeof pdfParseModule.default === "function") {
-    return await pdfParseModule.default(buffer);
-  } else {
-    throw new Error("pdf-parse library initialization failed");
+  try {
+    if (typeof pdfParseModule === "function") {
+      return await pdfParseModule(buffer);
+    } else if (pdfParseModule && typeof pdfParseModule.default === "function") {
+      return await pdfParseModule.default(buffer);
+    } else {
+      throw new Error("pdf-parse function not found in exports");
+    }
+  } catch (err) {
+    throw err;
   }
 };
 
@@ -80,11 +84,6 @@ async function generateInterviewReportController(req, res) {
   }
 }
 
-/**
- * @route GET /api/interview/report/:interviewId
- * @description get interview report by interviewId.
- * @access private
- */
 async function getInterviewReportByIdController(req, res) {
   try {
     const { interviewId } = req.params;
@@ -110,11 +109,6 @@ async function getInterviewReportByIdController(req, res) {
   }
 }
 
-/**
- * @route GET /api/interview/
- * @description get all interview reports of the logged in user.
- * @access private    
- */
 async function getAllInterviewReportsController(req, res) {
   try {
     const interviewReports = await interviewReportModel
@@ -132,9 +126,6 @@ async function getAllInterviewReportsController(req, res) {
   }
 }
 
-/**
- * @description Generates a PDF buffer from the provided report content.
- */
 async function generateResumePdfController(req, res) {
   try {
     const { interviewReportId } = req.params;
@@ -154,16 +145,14 @@ async function generateResumePdfController(req, res) {
       selfDescription
     });
 
-    if (!pdfBuffer) {
-      console.error("❌ Error: aiService.generateResumePdf returned empty buffer.");
-      return res.status(500).json({ message: "Failed to generate PDF." });
+    if (!pdfBuffer || !Buffer.isBuffer(pdfBuffer)) {
+      console.error("❌ Error: aiService.generateResumePdf did not return a valid Buffer.");
+      return res.status(500).json({ message: "Failed to generate PDF buffer." });
     }
 
-    res.set({
-      'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename=resume_${interviewReportId}.pdf`,
-      'Content-Length': pdfBuffer.length || 0
-    });
+    // Fixed: Headers updated safely without strict manual content length
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename=resume_${interviewReportId}.pdf`);
 
     return res.send(pdfBuffer);
   } catch (error) {
